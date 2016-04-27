@@ -39,7 +39,7 @@ var PgDriver = Base.extend({
     },
 
     createColumnDef: function(name, spec, options, tableName) {
-        var type = spec.autoIncrement ? '' : this.mapDataType(spec.type);
+        var type = spec.autoIncrement ? '' : this.mapDataType(spec);
         var len = spec.length ? util.format('(%s)', spec.length) : '';
         var constraint = this.createColumnConstraint(spec, options, tableName, name);
         if (name.charAt(0) != '"') {
@@ -50,16 +50,20 @@ var PgDriver = Base.extend({
                  constraints: [name, type, len, constraint.constraints].join(' ') };
     },
 
-    mapDataType: function(str) {
-        switch(str) {
+    mapDataType: function(spec) {
+        switch(spec.type) {
           case type.STRING:
             return 'VARCHAR';
           case type.DATE_TIME:
             return 'TIMESTAMP';
           case type.BLOB:
             return 'BYTEA';
+          case 'ENUM':
+            return 'ENUM (' + spec.possibleValues.map(function (val) {
+              return "'"+val+"'"
+            }).join(',') + ')'
         }
-        return this._super(str);
+        return this._super(spec.type);
     },
 
     createDatabase: function(dbName, options, callback) {
@@ -372,8 +376,8 @@ var PgDriver = Base.extend({
       function setType() {
         if (columnSpec.type !== undefined){
           var using = columnSpec.using !== undefined ?
-            columnSpec.using : util.format('USING "%s"::%s', columnName, this.mapDataType(columnSpec.type))
-          var sql = util.format('ALTER TABLE "%s" ALTER COLUMN "%s" TYPE %s %s', tableName, columnName, this.mapDataType(columnSpec.type), using);
+            columnSpec.using : util.format('USING "%s"::%s', columnName, this.mapDataType(columnSpec))
+          var sql = util.format('ALTER TABLE "%s" ALTER COLUMN "%s" TYPE %s %s', tableName, columnName, this.mapDataType(columnSpec), using);
           return this.runSql(sql);
         }
       }
