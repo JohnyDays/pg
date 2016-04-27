@@ -1,5 +1,5 @@
 {
-  "name": "db-migrate-pg",
+  "name": "@johnydays/db-migrate-pg",
   "version": "0.1.9",
   "description": "A postgresql driver for db-migrate",
   "main": "index.js",
